@@ -11,6 +11,8 @@ struct MainMessagesView: View {
     
     @State var shouldShowLogOutOptions = false
     
+    @ObservedObject private var vm = MainMessagesViewModel()
+    
     private var customNavBar: some View {
         HStack{
             
@@ -18,7 +20,7 @@ struct MainMessagesView: View {
                 .font(.system(size: 34, weight: .heavy))
             
             VStack(alignment: .leading, spacing: 4){
-                Text("USERNAME")
+                Text("\(vm.chatUser?.username ?? "Username")")
                     .font(.system(size: 24, weight: .bold))
                 
                 HStack{
