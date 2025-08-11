@@ -6,18 +6,62 @@
 //
 
 import SwiftUI
+import SDWebImageSwiftUI
 
 struct MainMessagesView: View {
     
     @State var shouldShowLogOutOptions = false
+    @State var shouldShowNewChatOptions = false
+    @State var shouldNavigateToChatLogView = false
     
     @ObservedObject private var vm = MainMessagesViewModel()
+    
+    @State var chatUser: ChatUser?
     
     private var customNavBar: some View {
         HStack{
             
-            Image(systemName: "person.fill")
-                .font(.system(size: 34, weight: .heavy))
+            //MARK: Only work with firestore
+            
+//            WebImage(url: URL(string: vm.chatUser?.profileImage ?? ""))
+//                .resizable()
+//                .scaledToFill()
+//                .frame(width: 50, height: 50)
+//                .clipped()
+//                .cornerRadius(50)
+//                .overlay(
+//                    RoundedRectangle(
+//                        cornerRadius: 44
+//                    )
+//                    .stroke(Color.black, lineWidth: 1)
+//                )
+//                .shadow(radius: 5)
+            
+            //MARK: Use this for now.
+            //Since I used base64 encode to store the image in firestore, directly decoding it is the best option.
+            
+            if let base64String = vm.chatUser?.profileImage,
+               let imageData = Data(base64Encoded: base64String),
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 50, height: 50)
+                    .clipped()
+                    .cornerRadius(50)
+                    .overlay(
+                        RoundedRectangle(
+                            cornerRadius: 44
+                        )
+                        .stroke(Color.black, lineWidth: 1)
+                    )
+                    .shadow(radius: 5)
+            } else {
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .frame(width: 48, height: 48)
+                    .clipShape(Circle())
+            }
             
             VStack(alignment: .leading, spacing: 4){
                 Text("\(vm.chatUser?.username ?? "Username")")
@@ -49,11 +93,21 @@ struct MainMessagesView: View {
                 buttons: [
                     .destructive(Text("Sign Out"), action: {
                         print("Handle Sign out")
+                        vm.handleSignOut()
                     }),
 //                            .default(Text("DEFAULT BUTTON")),
                     .cancel()
                 ]
             )
+        }
+        .fullScreenCover(
+            isPresented: $vm.isUserCurrentlyLoggedOut,
+            onDismiss: nil,
+        ){
+            LoginView(alreadyLoggedIn: {
+                self.vm.isUserCurrentlyLoggedOut = false
+                self.vm.fetchCurrentUser()
+            })
         }
     }
     
@@ -61,28 +115,32 @@ struct MainMessagesView: View {
         ScrollView{
             ForEach(0..<10, id: \.self) {num in
                 VStack{
-                    HStack(spacing: 16){
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 32))
-                            .padding(8)
-                            .overlay(
-                                RoundedRectangle(
-                                    cornerRadius: 44
+                    NavigationLink{
+                        Text("Destination")
+                    } label: {
+                        HStack(spacing: 16){
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 32))
+                                .padding(8)
+                                .overlay(
+                                    RoundedRectangle(
+                                        cornerRadius: 44
+                                    )
+                                    .stroke(Color.black, lineWidth: 1)
                                 )
-                                .stroke(Color.black, lineWidth: 1)
-                            )
-                        VStack(alignment: .leading){
-                            Text("User Name")
-                                .font(.system(size: 16, weight: .bold))
-                            Text("Message")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(.lightGray))
+                            VStack(alignment: .leading){
+                                Text("User Name")
+                                    .font(.system(size: 16, weight: .bold))
+                                Text("Message")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(.lightGray))
+                            }
+                            
+                            Spacer()
+                            
+                            Text("22d")
+                                .font(.system(size: 14, weight: .semibold))
                         }
-                        
-                        Spacer()
-                        
-                        Text("22d")
-                            .font(.system(size: 14, weight: .semibold))
                     }
                     
                     Divider()
@@ -94,7 +152,9 @@ struct MainMessagesView: View {
     }
     
     private var newMessageButton: some View{
-        Button {}
+        Button {
+            shouldShowNewChatOptions.toggle()
+        }
         label: {
             HStack{
                 Spacer()
@@ -109,17 +169,27 @@ struct MainMessagesView: View {
             .padding(.horizontal)
             .shadow(radius: 15)
         }
+        .fullScreenCover(isPresented: $shouldShowNewChatOptions, onDismiss: nil){
+            CreateNewMessageView(didSelectNewUser: { user in
+                print(user.email)
+                self.shouldNavigateToChatLogView.toggle()
+                self.chatUser = user
+            })
+        }
     }
     
     var body: some View {
         NavigationView{
             VStack{
-                
                 //Custom Navigation Bar
                 customNavBar
                 
                 //Messages View
                 messagesView
+                
+                NavigationLink("", isActive: $shouldNavigateToChatLogView) {
+                    Text("Chat Log View")
+                }
             }
             .overlay(
                 newMessageButton, alignment: .bottom
