@@ -188,7 +188,7 @@ struct MainMessagesView: View {
                 messagesView
                 
                 NavigationLink("", isActive: $shouldNavigateToChatLogView) {
-                    Text("Chat Log View")
+                    ChatLogView(chatUser: self.chatUser)
                 }
             }
             .overlay(
