@@ -15,11 +15,18 @@ class MainMessagesViewModel: ObservableObject{
     @Published var errorMessage = ""
     @Published var chatUser: ChatUser?
     
+    @Published var isUserCurrentlyLoggedOut: Bool = false
+    
     init() {
+        
+        DispatchQueue.main.async {
+            self.isUserCurrentlyLoggedOut = Auth.auth().currentUser?.uid == nil
+        }
+        
         fetchCurrentUser()
     }
     
-    private func fetchCurrentUser(){
+    func fetchCurrentUser(){
         guard let uid = Auth.auth().currentUser?.uid
         else {
             self.errorMessage = "Could not find firebase UID"
@@ -43,18 +50,16 @@ class MainMessagesViewModel: ObservableObject{
             
 //            self.errorMessage = "Data: \(data.description)"
             
-            let uid = data["uid"] as? String ?? ""
-            let email = data["email"] as? String ?? ""
-            let username = data["username"] as? String ?? ""
-            let profileImage = data["profileImage"] as? String ?? ""
-            
-            self.chatUser = ChatUser(
-                uid: uid,
-                email: email,
-                username: username,
-                profileImage: profileImage
-            )
-            
+            self.chatUser = .init(data: data)
+        }
+    }
+    
+    func handleSignOut(){
+        do {
+            try Auth.auth().signOut()
+            isUserCurrentlyLoggedOut.toggle()
+        } catch {
+            print("Error signing out: \(error)")
         }
     }
 }

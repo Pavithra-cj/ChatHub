@@ -13,14 +13,16 @@ import FirebaseFirestore
 
 struct LoginView: View {
     
-    @State var isLoginMode: Bool = true
-    @State var email = ""
-    @State var password = ""
-    @State var name = ""
-    @State var username = ""
-    @State var loginStatusMsg = ""
+    let alreadyLoggedIn: () -> ()
     
-    @State var shouldShowImagePicker = false
+    @State private var isLoginMode: Bool = true
+    @State private var email = ""
+    @State private var password = ""
+    @State private var name = ""
+    @State private var username = ""
+    @State private var loginStatusMsg = ""
+    
+    @State private var shouldShowImagePicker = false
     @State var image: UIImage?
     
     var body: some View {
@@ -149,6 +151,8 @@ struct LoginView: View {
             
             print("Loged in successfully!: \(result!.user.uid)")
             self.loginStatusMsg = "User login successfully as: \(result!.user.uid)"
+            
+            self.alreadyLoggedIn()
         }
     }
     
@@ -194,6 +198,8 @@ struct LoginView: View {
             
             print("User created successfully!: \(result!.user.uid)")
             self.loginStatusMsg = "User created successfully!: \(result!.user.uid)"
+            
+            self.alreadyLoggedIn()
         }
     }
     
@@ -224,5 +230,7 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    LoginView(alreadyLoggedIn: {
+        
+    })
 }
