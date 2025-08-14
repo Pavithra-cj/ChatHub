@@ -18,6 +18,8 @@ class ChatLogViewModel: ObservableObject {
     
     @Published var chatMessages = [ChatMessage]()
     
+    @Published var count = 0
+    
     let chatUser: ChatUser?
     
     init(chatUser: ChatUser?) {
@@ -38,24 +40,27 @@ class ChatLogViewModel: ObservableObject {
             .order(by: "timeStamp")
             .addSnapshotListener { querySnapshot,error in
                 if let error = error {
-                print("Error listening for changes: \(error.localizedDescription)")
-                self.errorMessage = "Faield to fetch messages: \(error.localizedDescription)"
-                return
-            }
-            querySnapshot?.documentChanges.forEach({ change in
-                if change.type == .added {
-                    let data = change.document.data()
-                    
-                    self.chatMessages
-                        .append(
-                            .init(
-                                documentId: change.document.documentID,
-                                data: data
-                            )
-                        )
+                    print("Error listening for changes: \(error.localizedDescription)")
+                    self.errorMessage = "Faield to fetch messages: \(error.localizedDescription)"
+                    return
                 }
-            })
-        }
+                querySnapshot?.documentChanges.forEach({ change in
+                    if change.type == .added {
+                        let data = change.document.data()
+                        
+                        self.chatMessages
+                            .append(
+                                .init(
+                                    documentId: change.document.documentID,
+                                    data: data
+                                )
+                            )
+                    }
+                })
+                DispatchQueue.main.async{
+                    self.count += 1
+                }
+            }
     }
     
     func handleSendMessage() {
@@ -84,6 +89,7 @@ class ChatLogViewModel: ObservableObject {
             
             print("Successfully saved message")
             self.chatText = ""
+            self.count += 1
         }
         
         recipientMessageDocument.setData(messageData) { error in

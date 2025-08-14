@@ -19,6 +19,8 @@ struct ChatLogView: View {
     }
     
     @ObservedObject var vm: ChatLogViewModel
+    
+    static let emptyScrollToString = "Empty"
         
     var body: some View {
         VStack{
@@ -37,45 +39,66 @@ struct ChatLogView: View {
     
     private var messageView: some View {
         ScrollView{
-            ForEach(vm.chatMessages) { message in
+            ScrollViewReader { scrollViewProxy in
                 VStack{
-                    if message.fromId == Auth.auth().currentUser?.uid {
-                        HStack{
-                            Spacer()
-                            
-                            HStack{
-                                Text(message.message)
-                                    .foregroundColor(.white)
-                            }
-                            .padding()
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                            .shadow(radius: 5)
-                        }
-                    } else {
-                        HStack{
-                            HStack{
-                                Text(message.message)
-                                    .foregroundColor(.black)
-                            }
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(10)
-                            .shadow(radius: 5)
-                            
-                            Spacer()
-                        }
+                    ForEach(vm.chatMessages) { message in
+                        
+                        MessageBubbleView(message: message)
+                        
+                    }
+                    
+                    HStack{
+                        Spacer()
+                    }
+                    .id(Self.emptyScrollToString)
+                }
+                .onReceive(vm.$count) { _ in
+                    withAnimation(.easeOut(duration: 0.5)){
+                        scrollViewProxy
+                            .scrollTo(Self.emptyScrollToString, anchor: .bottom)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 8)
-            }
-            
-            HStack{
-                Spacer()
             }
         }
         .background(Color(.init(white: 0.95, alpha: 1)))
+    }
+    
+    struct MessageBubbleView: View {
+        let message: ChatMessage
+        
+        var body: some View{
+            VStack{
+                if message.fromId == Auth.auth().currentUser?.uid {
+                    HStack{
+                        Spacer()
+                        
+                        HStack{
+                            Text(message.message)
+                                .foregroundColor(.white)
+                        }
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(10)
+                        .shadow(radius: 5)
+                    }
+                } else {
+                    HStack{
+                        HStack{
+                            Text(message.message)
+                                .foregroundColor(.black)
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .shadow(radius: 5)
+                        
+                        Spacer()
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+        }
     }
     
     private var inputView: some View {
