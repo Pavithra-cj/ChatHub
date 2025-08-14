@@ -11,11 +11,11 @@ import SwiftUI
 struct ChatUser: Identifiable {
     var id: String { uid }
     
-    var uid: String
-    var email: String
-    var username: String
-    var name: String
-    var profileImage: String?
+    let uid: String
+    let email: String
+    let username: String
+    let name: String
+    let profileImage: String?
     
     init(data: [String: Any]){
         self.uid = data["uid"] as? String ?? ""
