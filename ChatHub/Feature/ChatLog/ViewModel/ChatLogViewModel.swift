@@ -30,18 +30,30 @@ class ChatLogViewModel: ObservableObject {
         guard let fromId = Auth.auth().currentUser?.uid else { return }
         guard let toId = chatUser?.uid else { return }
         
-        Firestore.firestore().collection("chats").document(fromId).collection(toId).addSnapshotListener {
-            querySnapshot,
-            error in if let error = error {
+        Firestore
+            .firestore()
+            .collection("chats")
+            .document(fromId)
+            .collection(toId)
+            .order(by: "timeStamp")
+            .addSnapshotListener { querySnapshot,error in
+                if let error = error {
                 print("Error listening for changes: \(error.localizedDescription)")
                 self.errorMessage = "Faield to fetch messages: \(error.localizedDescription)"
                 return
             }
-            querySnapshot?.documents.forEach({ queryDocumentSnapshot in
-                let data = queryDocumentSnapshot.data()
-                let docId = queryDocumentSnapshot.documentID
-                
-                self.chatMessages.append(.init(documentId: docId, data: data))
+            querySnapshot?.documentChanges.forEach({ change in
+                if change.type == .added {
+                    let data = change.document.data()
+                    
+                    self.chatMessages
+                        .append(
+                            .init(
+                                documentId: change.document.documentID,
+                                data: data
+                            )
+                        )
+                }
             })
         }
     }
