@@ -88,6 +88,9 @@ class ChatLogViewModel: ObservableObject {
             }
             
             print("Successfully saved message")
+            
+            self.persistRecentMessage()
+            
             self.chatText = ""
             self.count += 1
         }
@@ -99,6 +102,46 @@ class ChatLogViewModel: ObservableObject {
             }
             
             print("Recipeient successfully saved message")
+        }
+    }
+    
+    private func persistRecentMessage() {
+        guard let chatUser = chatUser else { return }
+        
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        guard let toId = self.chatUser?.uid else { return }
+        
+        let document = Firestore.firestore().collection("recent_chats").document(uid).collection("messages").document(toId)
+        
+        let recipientMessageDocument = Firestore.firestore().collection("recent_chats").document(toId).collection("messages").document(uid)
+        
+        let data = [
+            "timestamp": Timestamp(),
+            FirebaseConstants.message: self.chatText,
+            FirebaseConstants.toId: toId,
+            FirebaseConstants.fromId: uid,
+            "profileImageUrl": chatUser.profileImage ?? "",
+            "displayName": chatUser.name
+        ] as [String : Any]
+        
+        document.setData(data) { error in
+            if let error = error {
+                print("Error writing document: \(error)")
+                self.errorMessage = "Error writing document: \(error)"
+                return
+            }
+            
+            print("Successfull data added to recent chats")
+        }
+        
+        recipientMessageDocument.setData(data) { error in
+            if let error = error {
+                self.errorMessage = "Failed to save message: \(error.localizedDescription)"
+                return
+            }
+            
+            print("Recipeient successfully saved a recent message")
         }
     }
     
