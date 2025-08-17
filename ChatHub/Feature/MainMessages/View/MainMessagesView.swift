@@ -113,33 +113,46 @@ struct MainMessagesView: View {
     
     private var messagesView: some View{
         ScrollView{
-            ForEach(0..<10, id: \.self) {num in
+            ForEach(vm.recentMessages) { recentMessage in
                 VStack{
                     NavigationLink{
                         Text("Destination")
                     } label: {
                         HStack(spacing: 16){
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 32))
-                                .padding(8)
-                                .overlay(
-                                    RoundedRectangle(
-                                        cornerRadius: 44
+                            if let imageData = Data(base64Encoded: recentMessage.profileImageUrl),
+                               let uiImage = UIImage(data: imageData) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 50, height: 50)
+                                    .clipped()
+                                    .cornerRadius(50)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 44)
+                                            .stroke(Color.black, lineWidth: 1)
                                     )
-                                    .stroke(Color.black, lineWidth: 1)
-                                )
-                            VStack(alignment: .leading){
-                                Text("User Name")
+                                    .shadow(radius: 5)
+                            } else {
+                                Image(systemName: "person.fill")
+                                    .resizable()
+                                    .frame(width: 48, height: 48)
+                                    .clipShape(Circle())
+                            }
+                            VStack(alignment: .leading, spacing: 8){
+                                Text(recentMessage.displayName)
                                     .font(.system(size: 16, weight: .bold))
-                                Text("Message")
+                                    .foregroundColor(Color(.label))
+                                Text(recentMessage.message)
                                     .font(.system(size: 14))
-                                    .foregroundColor(Color(.lightGray))
+                                    .foregroundColor(Color(.darkGray))
+                                    .multilineTextAlignment(.leading)
                             }
                             
                             Spacer()
                             
-                            Text("22d")
+                            Text(recentMessage.timeAgoDisplay)
                                 .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.gray)
                         }
                     }
                     
